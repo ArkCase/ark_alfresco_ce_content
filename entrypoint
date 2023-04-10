@@ -7,6 +7,11 @@ say() {
 [ -v BASE_DIR ] || BASE_DIR="/app"
 [ -v INIT_DIR ] || INIT_DIR="${BASE_DIR}/init"
 
+###################################################################
+# UPDATE CA CERTIFICATES                                          #
+###################################################################
+/update-ssl
+
 #
 # TODO: Run initialization (i.e. put the license in the right place, etc.)
 #

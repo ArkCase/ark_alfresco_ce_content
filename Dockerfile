@@ -78,14 +78,16 @@ ENV JAVA_HOME="/usr/lib/jvm/jre-11-openjdk" \
 RUN yum -y update && \
     yum -y install \
         apr \
-        langpacks-en \
-        java-${JAVA_MAJOR}-openjdk-devel \
-        fontconfig \
         dejavu-fonts-common \
+        dejavu-sans-fonts \
+        fontconfig \
         fontpackages-filesystem \
         freetype \
+        java-${JAVA_MAJOR}-openjdk-devel \
+        langpacks-en \
         libpng \
-        dejavu-sans-fonts && \
+        sudo \
+    && \
     yum -y clean all && \
     mkdir -p "${CATALINA_HOME}" && \
     mkdir -p "${TOMCAT_NATIVE_LIBDIR}" && \
@@ -96,11 +98,15 @@ WORKDIR "${CATALINA_HOME}"
 COPY --from=alfresco-src "${CATALINA_HOME}" "${CATALINA_HOME}"
 COPY --from=alfresco-src /licenses /licenses
 COPY --from=rm-src /alfresco-governance-services-community-repo-*.amp /alfresco-governance-services-community-repo.amp
-COPY entrypoint /entrypoint
+COPY entrypoint /
+COPY --chown=root:root update-ssl /
+COPY --chown=root:root 00-update-ssl /etc/sudoers.d/
 
 RUN chown -R "${APP_USER}:" "${CATALINA_HOME}" && \
     chown -R "${APP_USER}:" /licenses  && \
-    chmod 0755 /entrypoint
+    chmod 0755 /entrypoint && \
+    chmod 0640 /etc/sudoers.d/00-update-ssl && \
+    sed -i -e "s;\${ACM_GROUP};${APP_GROUP};g" /etc/sudoers.d/00-update-ssl
 
 USER "${APP_USER}"
 ENV JAVA_HOME="/usr/lib/jvm/jre-11-openjdk" \
