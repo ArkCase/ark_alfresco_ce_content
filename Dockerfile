@@ -12,11 +12,11 @@
 
 ARG PUBLIC_REGISTRY="public.ecr.aws"
 ARG BASE_REPO="arkcase/base"
-ARG BASE_TAG="8.7.0"
+ARG BASE_TAG="8.8-01"
 ARG ARCH="amd64"
 ARG OS="linux"
 ARG VER="7.3.1"
-ARG BLD="02"
+ARG BLD="03"
 ARG PKG="alfresco-content"
 ARG ALFRESCO_SRC="docker.io/alfresco/alfresco-content-repository-community"
 ARG RM_VER="${VER}"
@@ -97,21 +97,17 @@ RUN yum -y update && \
     mkdir -p "${CATALINA_HOME}" && \
     mkdir -p "${TOMCAT_NATIVE_LIBDIR}" && \
     groupadd -g "${APP_GID}" "${APP_GROUP}" && \
-    useradd -u "${APP_UID}" -g "${APP_GROUP}" "${APP_USER}"
+    useradd -u "${APP_UID}" -g "${APP_GROUP}" -G "${ACM_GROUP}" "${APP_USER}"
 
 WORKDIR "${CATALINA_HOME}"
 COPY --from=alfresco-src "${CATALINA_HOME}" "${CATALINA_HOME}"
 COPY --from=alfresco-src /licenses /licenses
 COPY --from=rm-src /alfresco-governance-services-community-repo-*.amp /alfresco-governance-services-community-repo.amp
 COPY entrypoint /
-COPY --chown=root:root update-ssl /
-COPY --chown=root:root 00-update-ssl /etc/sudoers.d/
 
 RUN chown -R "${APP_USER}:" "${CATALINA_HOME}" && \
     chown -R "${APP_USER}:" /licenses  && \
-    chmod 0755 /entrypoint && \
-    chmod 0640 /etc/sudoers.d/00-update-ssl && \
-    sed -i -e "s;\${ACM_GROUP};${APP_GROUP};g" /etc/sudoers.d/00-update-ssl
+    chmod 0755 /entrypoint
 
 USER "${APP_USER}"
 ENV JAVA_HOME="/usr/lib/jvm/jre-11-openjdk" \
