@@ -10,13 +10,7 @@ say() {
 ###################################################################
 # UPDATE CA CERTIFICATES                                          #
 ###################################################################
-/update-ssl
-
-#
-# TODO: Run initialization (i.e. put the license in the right place, etc.)
-#
-# Bootstrap info: https://docs.alfresco.com/content-services/latest/develop/repo-ext-points/bootstrap-content/
-#
+acme-init
 
 #
 # First things first: if there's a license in ${INIT_DIR}, apply it
