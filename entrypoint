@@ -13,7 +13,7 @@ say() {
 # UPDATE CA CERTIFICATES                                          #
 ###################################################################
 [ -v SSL_DIR ] || SSL_DIR="/.ssl"
-acme-init
+/usr/local/bin/acme-init
 
 #
 # First things first: if there's a license in ${INIT_DIR}, apply it
