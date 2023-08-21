@@ -124,6 +124,7 @@ ADD --chown="${APP_USER}:${APP_GROUP}" "${MSSQL_DRIVER_URL}" "${LIB_DIR}/"
 ADD --chown="${APP_USER}:${APP_GROUP}" "${MYSQL_DRIVER_URL}" "${LIB_DIR}/"
 ADD --chown="${APP_USER}:${APP_GROUP}" "${ORACLE_DRIVER_URL}" "${LIB_DIR}/"
 ADD --chown="${APP_USER}:${APP_GROUP}" "${POSTGRES_DRIVER_URL}" "${LIB_DIR}/"
+ADD --chown="${APP_USER}:${APP_GROUP}" "server.xml" "${TOMCAT_DIR}/conf/server.xml"
 
 RUN java -jar "${TOMCAT_DIR}/alfresco-mmt"/alfresco-mmt*.jar \
         install "/alfresco-governance-services-community-repo.amp" \
