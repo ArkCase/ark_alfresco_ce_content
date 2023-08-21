@@ -129,6 +129,19 @@
         </SSLHostConfig>
     </Connector>
 
+    <Connector port="8999"
+               protocol="HTTP/1.1"
+               connectionTimeout="20000"
+               SSLEnabled="true"
+               scheme="https"
+               secure="true"
+               sslProtocol="TLS"
+               clientAuth="true"
+               keystoreFile="/.ssl/keystore.pkcs12"
+               keystorePass="set-me-to-something"
+               truststoreFile="/etc/pki/java/cacerts"
+               truststorePass="changeit" />
+
     <!-- Define an AJP 1.3 Connector on port 8009 -->
     <!--
     <Connector protocol="AJP/1.3"
