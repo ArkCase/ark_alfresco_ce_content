@@ -111,14 +111,14 @@
         </SSLHostConfig>
     </Connector>
     -->
-    <Connector connectionTimeout="40000"
-               maxHttpHeaderSize="32768"
-               maxThreads="150"
+    <Connector protocol="org.apache.coyote.http11.Http11AprProtocol"
                port="8443"
-               protocol="org.apache.coyote.http11.Http11AprProtocol"
                scheme="https"
                secure="true"
                SSLEnabled="true"
+               connectionTimeout="40000"
+               maxHttpHeaderSize="32768"
+               maxThreads="150"
                useBodyEncodingForURI="true">
         <UpgradeProtocol className="org.apache.coyote.http2.Http2Protocol" />
         <SSLHostConfig protocols="TLSv1.2" certificateVerification="none">
@@ -129,20 +129,19 @@
         </SSLHostConfig>
     </Connector>
 
-    <Connector port="8999"
-               protocol="HTTP/1.1"
-               connectionTimeout="20000"
-               SSLEnabled="true"
+    <Connector protocol="org.apache.coyote.http11.Http11AprProtocol"
+               port="8999"
                scheme="https"
                secure="true"
-               sslProtocol="TLS"
-               clientAuth="true"
-               keystoreFile="/.ssl/keystore.pkcs12"
-               keystorePass="set-me-to-something"
-               keystoreType="PKCS12"
-               truststoreFile="/etc/pki/java/cacerts"
-               truststorePass="changeit"
-               truststoreType="JKS" />
+               SSLEnabled="true"
+               connectionTimeout="20000">
+        <SSLHostConfig protocols="TLSv1.2" certificateVerification="required" caCertificateFile="/.ssl/ca-chain.pem">
+            <Certificate certificateKeyFile="/.ssl/cert.key"
+                         certificateFile="/.ssl/cert.pem"
+                         certificateChainFile="/.ssl/ca-chain.pem"
+                         type="RSA" />
+        </SSLHostConfig>
+    </Connector>
 
     <!-- Define an AJP 1.3 Connector on port 8009 -->
     <!--

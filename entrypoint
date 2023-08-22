@@ -13,6 +13,7 @@ say() {
 # UPDATE CA CERTIFICATES                                          #
 ###################################################################
 [ -v SSL_DIR ] || SSL_DIR="/.ssl"
+export ACME_SUPPORT_JCEKS="true"
 /usr/local/bin/acme-init
 
 #
@@ -28,13 +29,5 @@ while read l ; do
 	fi
 	cp -vf "${l}" "${TGT}" || fail "Failed to deploy the license from [${l}]"
 done < <(find "${INIT_DIR}/license" -mindepth 1 -maxdepth 1 -type f -name "*.lic")
-
-# Set the keystore password for Solr client auth
-SERVER_XML="${TOMCAT_DIR}/conf/server.xml"
-cp -vf "${SERVER_XML}" "${SERVER_XML}.orig"
-/usr/bin/xmlstarlet ed -L -P \
-	--update "/Server/Service[@name = 'Catalina']/Connector[@port = '8999']/@keystoreFile" --value "${SSL_DIR}/keystore.pkcs12" \
-	--update "/Server/Service[@name = 'Catalina']/Connector[@port = '8999']/@keystorePass" --value "$(<"${SSL_DIR}/keystore.pass")" \
-	"${SERVER_XML}"
 
 exec "${CATALINA_HOME}/bin/catalina.sh" run -security
