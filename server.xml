@@ -139,8 +139,10 @@
                clientAuth="true"
                keystoreFile="/.ssl/keystore.pkcs12"
                keystorePass="set-me-to-something"
+               keystoreType="PKCS12"
                truststoreFile="/etc/pki/java/cacerts"
-               truststorePass="changeit" />
+               truststorePass="changeit"
+               truststoreType="JKS" />
 
     <!-- Define an AJP 1.3 Connector on port 8009 -->
     <!--
