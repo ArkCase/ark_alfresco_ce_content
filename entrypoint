@@ -17,17 +17,32 @@ export ACME_SUPPORT_JCEKS="true"
 /usr/local/bin/acme-init
 
 #
-# First things first: if there's a license in ${INIT_DIR}, apply it
+# Add the requisite CATALINA_OPTS carrying certificate passwords (not the cleanest way, but
+# Alfresco isn't smart enough to do better)
 #
-[ -v LICENSE_DIR ] || LICENSE_DIR="/usr/local/tomcat/shared/classes/alfresco/extension/license"
-[ -d "${LICENSE_DIR}" ] || mkdir -p "${LICENSE_DIR}" || fail "Failed to create the license directory [${LICENSE_DIR}]"
-while read l ; do
-	TGT="${LICENSE_DIR}/${l##*/}"
-	if [ -e "${TGT}" ] ; then
-		[ -f "${TGT}" ] || fail "The object at [${TGT}] is not a file, can't continue"
-		mv -f "${TGT}" "${TGT}.bak-$(date -u +%s)" || say "WARNING: Failed to back up the license at [${TGT}] - it will be overwritten"
-	fi
-	cp -vf "${l}" "${TGT}" || fail "Failed to deploy the license from [${l}]"
-done < <(find "${INIT_DIR}/license" -mindepth 1 -maxdepth 1 -type f -name "*.lic")
+[ -v CATALINA_OPTS ] || CATALINA_OPTS=""
+CATALINA_OPTS+=" -Dencryption.ssl.truststore.location=/etc/pki/java/cacerts -Dencryption.ssl.truststore.type=JKS"
+if [ -f "${SSL_DIR}/keystore.pass" ] && [ -f "${SSL_DIR}/keystore.pkcs12" ] ; then
+	KEYSTORE_PASSWORD="$(<"${SSL_DIR}/keystore.pass")"
+	CATALINA_OPTS+=" -Dencryption.ssl.keystore.location=${SSL_DIR}/keystore.pkcs12 -Dencryption.ssl.keystore.type=PKCS12"
+	CATALINA_OPTS+=" -Dssl-keystore.password=${KEYSTORE_PASSWORD} -Dssl-keystore.aliases=acme -Dssl-keystore.acme.password=${KEYSTORE_PASSWORD}"
+fi
+export CATALINA_OPTS
+
+#
+# Next up: if there's a license in ${INIT_DIR}, apply it
+#
+if [ -d "${INIT_DIR}/license" ] ; then
+	[ -v LICENSE_DIR ] || LICENSE_DIR="/usr/local/tomcat/shared/classes/alfresco/extension/license"
+	[ -d "${LICENSE_DIR}" ] || mkdir -p "${LICENSE_DIR}" || fail "Failed to create the license directory [${LICENSE_DIR}]"
+	while read l ; do
+		TGT="${LICENSE_DIR}/${l##*/}"
+		if [ -e "${TGT}" ] ; then
+			[ -f "${TGT}" ] || fail "The object at [${TGT}] is not a file, can't continue"
+			mv -f "${TGT}" "${TGT}.bak-$(date -u +%s)" || say "WARNING: Failed to back up the license at [${TGT}] - it will be overwritten"
+		fi
+		cp -vf "${l}" "${TGT}" || fail "Failed to deploy the license from [${l}]"
+	done < <(find "${INIT_DIR}/license" -mindepth 1 -maxdepth 1 -type f -name "*.lic")
+fi
 
 exec "${CATALINA_HOME}/bin/catalina.sh" run -security
