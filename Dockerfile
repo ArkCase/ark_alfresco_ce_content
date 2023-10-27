@@ -11,20 +11,15 @@
 ###########################################################################################################
 
 ARG PUBLIC_REGISTRY="public.ecr.aws"
-ARG BASE_REPO="arkcase/base"
-ARG BASE_TAG="8-02"
 ARG ARCH="amd64"
 ARG OS="linux"
 ARG VER="7.3.1"
-ARG BLD="06"
 ARG PKG="alfresco-content"
-ARG ALFRESCO_SRC="docker.io/alfresco/alfresco-content-repository-community"
-ARG RM_VER="${VER}"
-ARG RM_SRC="arkcase/alfresco-ce-rm"
 ARG APP_USER="alfresco"
 ARG APP_UID="33000"
 ARG APP_GROUP="${APP_USER}"
 ARG APP_GID="1000"
+
 ARG MARIADB_DRIVER="3.1.2"
 ARG MARIADB_DRIVER_URL="https://repo1.maven.org/maven2/org/mariadb/jdbc/mariadb-java-client/${MARIADB_DRIVER}/mariadb-java-client-${MARIADB_DRIVER}.jar"
 ARG MSSQL_DRIVER="9.2.1.jre11"
@@ -36,28 +31,32 @@ ARG ORACLE_DRIVER_URL="https://repo1.maven.org/maven2/com/oracle/database/jdbc/o
 ARG POSTGRES_DRIVER="42.3.2"
 ARG POSTGRES_DRIVER_URL="https://repo1.maven.org/maven2/org/postgresql/postgresql/${POSTGRES_DRIVER}/postgresql-${POSTGRES_DRIVER}.jar"
 
+ARG ALFRESCO_REPO="docker.io/alfresco/alfresco-content-repository-community"
+ARG ALFRESCO_IMG="${ALFRESCO_REPO}:${VER}"
+
+ARG RM_REPO="arkcase/alfresco-ce-rm"
+ARG RM_VER="${VER}"
+ARG RM_IMG="${PUBLIC_REGISTRY}/${RM_REPO}:${RM_VER}"
+
+ARG BASE_REPO="arkcase/base"
+ARG BASE_VER="8"
+ARG BASE_IMG="${PUBLIC_REGISTRY}/${BASE_REPO}:${BASE_VER}"
+
 # Used to copy artifacts
-FROM "${ALFRESCO_SRC}:${VER}" AS alfresco-src
+FROM "${ALFRESCO_IMG}" AS alfresco-src
 
-ARG PUBLIC_REGISTRY
-ARG RM_SRC
-ARG RM_VER
+ARG RM_IMG
 
-FROM "${PUBLIC_REGISTRY}/${RM_SRC}:${RM_VER}" AS rm-src
-
-ARG PUBLIC_REGISTRY
-ARG BASE_REPO
-ARG BASE_TAG
+FROM "${RM_IMG}" AS rm-src
 
 # Final Image
-FROM "${PUBLIC_REGISTRY}/${BASE_REPO}:${BASE_TAG}"
+ARG BASE_IMG
+FROM "${BASE_IMG}"
 
 ARG ARCH
 ARG OS
 ARG VER
 ARG PKG
-ARG ALFRESCO_SRC
-ARG RM_VER
 ARG APP_USER
 ARG APP_UID
 ARG APP_GROUP
