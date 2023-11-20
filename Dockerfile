@@ -2,7 +2,7 @@
 #
 # How to build:
 #
-# docker build -t arkcase/alfresco-ce-content:7.3.1 .
+# docker build -t arkcase/alfresco-ce-content:7.3.1.2 .
 #
 # How to run: (Docker)
 # docker compose -f docker-compose.yml up -d
@@ -13,7 +13,7 @@
 ARG PUBLIC_REGISTRY="public.ecr.aws"
 ARG ARCH="amd64"
 ARG OS="linux"
-ARG VER="7.3.1"
+ARG VER="7.3.1.2"
 ARG PKG="alfresco-content"
 ARG APP_USER="alfresco"
 ARG APP_UID="33000"
