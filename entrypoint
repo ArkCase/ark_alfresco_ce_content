@@ -2,7 +2,8 @@
 
 set -euo pipefail
 
-say() {
+say()
+{
 	echo -e "$(date -Isec): ${@}"
 }
 
@@ -30,19 +31,25 @@ fi
 export CATALINA_OPTS
 
 #
-# Next up: if there's a license in ${INIT_DIR}, apply it
+# Finally, if our admin password is set in a envvar, and the MD4 tool
+# is available in the path, create an MD4 version of the admin password
+# and make it available downstream
 #
-if [ -d "${INIT_DIR}/license" ] ; then
-	[ -v LICENSE_DIR ] || LICENSE_DIR="/usr/local/tomcat/shared/classes/alfresco/extension/license"
-	[ -d "${LICENSE_DIR}" ] || mkdir -p "${LICENSE_DIR}" || fail "Failed to create the license directory [${LICENSE_DIR}]"
-	while read l ; do
-		TGT="${LICENSE_DIR}/${l##*/}"
-		if [ -e "${TGT}" ] ; then
-			[ -f "${TGT}" ] || fail "The object at [${TGT}] is not a file, can't continue"
-			mv -f "${TGT}" "${TGT}.bak-$(date -u +%s)" || say "WARNING: Failed to back up the license at [${TGT}] - it will be overwritten"
+if type -P md4sum &>/dev/null ; then
+	[ -v ALFRESCO_ADMIN_PASSWORD_VAR ] || ALFRESCO_ADMIN_PASSWORD_VAR=""
+	[ -n "${ALFRESCO_ADMIN_PASSWORD_VAR}" ] || ALFRESCO_ADMIN_PASSWORD_VAR="ALFRESCO_ADMIN_PASSWORD"
+	if [[ "${ALFRESCO_ADMIN_PASSWORD_VAR}" =~ ^[_a-zA-Z][_a-zA-Z0-9]*$ ]] ; then
+		if [ -v "${ALFRESCO_ADMIN_PASSWORD_VAR}" ] ; then
+			V="$(echo -n "${!ALFRESCO_ADMIN_PASSWORD_VAR}" | md4sum)"
+			eval export "${ALFRESCO_ADMIN_PASSWORD_VAR}_MD4=${V@Q}"
+		else
+			say "⚠️ The administrator password variable [${ALFRESCO_ADMIN_PASSWORD_VAR}] is not set"
 		fi
-		cp -vf "${l}" "${TGT}" || fail "Failed to deploy the license from [${l}]"
-	done < <(find "${INIT_DIR}/license" -mindepth 1 -maxdepth 1 -type f -name "*.lic")
+	else
+		say "⚠️ The ALFRESCO_ADMIN_PASSWORD_VAR value [${ALFRESCO_ADMIN_PASSWORD_VAR}] is not a valid environment variable name"
+	fi
+else
+	say "⚠️ The md4sum tool was not found, will not try to set the administrator password"
 fi
 
 exec "${CATALINA_HOME}/bin/catalina.sh" run -security
