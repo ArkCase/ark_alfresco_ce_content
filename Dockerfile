@@ -108,6 +108,9 @@ RUN chown -R "${APP_USER}:" "${CATALINA_HOME}" && \
     chown -R "${APP_USER}:" /licenses  && \
     chmod 0755 /entrypoint
 
+COPY --chown=root:root md4sum /usr/local/bin
+RUN chmod 0755 /usr/local/bin/md4sum
+
 USER "${APP_USER}"
 ENV JAVA_HOME="/usr/lib/jvm/jre-11-openjdk" \
     JAVA_MAJOR="11" \
