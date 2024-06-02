@@ -79,7 +79,9 @@ ENV JAVA_HOME="/usr/lib/jvm/jre-11-openjdk" \
     LD_LIBRARY_PATH="${LD_LIBRARY_PATH:+${LD_LIBRARY_PATH}:}${TOMCAT_NATIVE_LIBDIR}" \
     PATH="${CATALINA_HOME}/bin:${PATH}"
 
-RUN yum -y update && \
+RUN yum -y install \
+        epel-release \
+    && \
     yum -y install \
         apr \
         dejavu-fonts-common \
@@ -90,6 +92,8 @@ RUN yum -y update && \
         java-${JAVA_MAJOR}-openjdk-devel \
         langpacks-en \
         libpng \
+        python3 \
+        python3-bcrypt \
         sudo \
     && \
     yum -y clean all && \
@@ -108,8 +112,8 @@ RUN chown -R "${APP_USER}:" "${CATALINA_HOME}" && \
     chown -R "${APP_USER}:" /licenses  && \
     chmod 0755 /entrypoint
 
-COPY --chown=root:root md4sum /usr/local/bin
-RUN chmod 0755 /usr/local/bin/md4sum
+COPY --chown=root:root md4 bcrypt10 sha256 /usr/local/bin
+RUN chmod 0755 /usr/local/bin/md4 /usr/local/bin/bcrypt10 /usr/local/bin/sha256
 
 USER "${APP_USER}"
 ENV JAVA_HOME="/usr/lib/jvm/jre-11-openjdk" \
