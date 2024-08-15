@@ -52,4 +52,23 @@ else
 	say "⚠️ The md4sum tool was not found, will not try to set the administrator password"
 fi
 
+# Finally, do environment substitution on the alfresco-global.properties file
+while read SRC ; do
+
+	[ -r "${SRC}" ] || continue
+
+	# Remove the ".tpl" suffix
+	TGT="${SRC%.*}"
+	[ -n "${TGT}" ] || continue
+
+	# Can we write to the target file? We can write to the target
+    # file if it doesn't exist, or exists and is writable.
+	[ -f "${TGT}" ] && [ ! -w "${TGT}" ] && say "⚠️ Can't expand the environment variables for [${TGT}] - the file exists but is not writable" && continue
+
+	# Do the deed!
+	say "📝 Expanding environment variables for [${TGT}]"
+	envsubst < "${SRC}" > "${TGT}"
+
+done < <(find /usr/local/tomcat/shared/classes -type f -iname '*.tpl' | sort)
+
 exec "${CATALINA_HOME}/bin/catalina.sh" run -security
