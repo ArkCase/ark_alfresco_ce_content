@@ -35,12 +35,12 @@ export CATALINA_OPTS
 # is available in the path, create an MD4 version of the admin password
 # and make it available downstream
 #
-if type -P md4sum &>/dev/null ; then
+if type -P md4 &>/dev/null ; then
 	[ -v ALFRESCO_ADMIN_PASSWORD_VAR ] || ALFRESCO_ADMIN_PASSWORD_VAR=""
 	[ -n "${ALFRESCO_ADMIN_PASSWORD_VAR}" ] || ALFRESCO_ADMIN_PASSWORD_VAR="ALFRESCO_ADMIN_PASSWORD"
 	if [[ "${ALFRESCO_ADMIN_PASSWORD_VAR}" =~ ^[_a-zA-Z][_a-zA-Z0-9]*$ ]] ; then
 		if [ -v "${ALFRESCO_ADMIN_PASSWORD_VAR}" ] ; then
-			V="$(echo -n "${!ALFRESCO_ADMIN_PASSWORD_VAR}" | md4sum)"
+			V="$(echo -n "${!ALFRESCO_ADMIN_PASSWORD_VAR}" | md4)"
 			eval export "${ALFRESCO_ADMIN_PASSWORD_VAR}_MD4=${V@Q}"
 		else
 			say "⚠️ The administrator password variable [${ALFRESCO_ADMIN_PASSWORD_VAR}] is not set"
@@ -49,7 +49,7 @@ if type -P md4sum &>/dev/null ; then
 		say "⚠️ The ALFRESCO_ADMIN_PASSWORD_VAR value [${ALFRESCO_ADMIN_PASSWORD_VAR}] is not a valid environment variable name"
 	fi
 else
-	say "⚠️ The md4sum tool was not found, will not try to set the administrator password"
+	say "⚠️ The md4 tool was not found, will not try to set the administrator password"
 fi
 
 # Finally, do environment substitution on the alfresco-global.properties file
