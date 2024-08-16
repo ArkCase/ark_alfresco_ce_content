@@ -71,4 +71,15 @@ while read SRC ; do
 
 done < <(find /usr/local/tomcat/shared/classes -type f -iname '*.tpl' | sort)
 
+[ -v ALFRESCO_PASSWORD_RESET ] || ALFRESCO_PASSWORD_RESET=""
+case "${ALFRESCO_PASSWORD_RESET,,}" in
+	true ) ALFRESCO_PASSWORD_RESET="true" ;;
+	* ) ALFRESCO_PASSWORD_RESET="false" ;;
+esac
+
+if "${ALFRESCO_PASSWORD_RESET}" ; then
+	say "📝 Resetting the Alfresco password for the user ${ALFRESCO_ADMIN_USERNAME} (and admin, just in case)"
+	java -jar /alfresco-password-reset.jar "\${${ALFRESCO_ADMIN_PASSWORD_VAR}}" "admin" "${ALFRESCO_ADMIN_USERNAME}"
+fi
+
 exec "${CATALINA_HOME}/bin/catalina.sh" run -security
