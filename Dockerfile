@@ -30,7 +30,7 @@ ARG ORACLE_DRIVER="19.11.0.0"
 ARG ORACLE_DRIVER_URL="https://repo1.maven.org/maven2/com/oracle/database/jdbc/ojdbc8/${ORACLE_DRIVER}/ojdbc8-${ORACLE_DRIVER}.jar"
 ARG POSTGRES_DRIVER="42.3.2"
 ARG POSTGRES_DRIVER_URL="https://repo1.maven.org/maven2/org/postgresql/postgresql/${POSTGRES_DRIVER}/postgresql-${POSTGRES_DRIVER}.jar"
-ARG ALFRESCO_PASSWORD_RESET="1.0.0"
+ARG ALFRESCO_PASSWORD_RESET="1.0.1"
 ARG ALFRESCO_PASSWORD_RESET_SRC="com.armedia:alfresco-password-reset:${ALFRESCO_PASSWORD_RESET}:jar"
 
 ARG ALFRESCO_REPO="docker.io/alfresco/alfresco-content-repository-community"
