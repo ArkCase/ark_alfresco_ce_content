@@ -155,7 +155,7 @@ RUN java -jar "${TOMCAT_DIR}/alfresco-mmt"/alfresco-mmt*.jar \
     test ${NATIVE} -ge 1 || exit 1 && \
     java -jar "${TOMCAT_DIR}/alfresco-mmt"/alfresco-mmt*.jar list  "${TOMCAT_DIR}/webapps/alfresco"
 
-COPY --from=alfresco-password-reset-src /alfresco-password-reset.jar "${TOMCAT_DIR}"
+COPY --from=alfresco-password-reset-src --chown="${APP_USER}:${APP_GROUP}" /alfresco-password-reset.jar "${TOMCAT_DIR}"
 
 EXPOSE 8000 8080 10001
 VOLUME [ "/usr/local/tomcat/alf_data" ]
