@@ -148,19 +148,14 @@ class MD4:
 		lbits, rbits = (value << n) & MD4.mask, value >> (MD4.width - n)
 		return lbits | rbits
 
-
-def main():
-
-	# Import is intentionally delayed.
-	import sys
-
-	# Compute based on stdin
-	message = sys.stdin.read()
-	md4 = MD4(message.encode())
-	print(md4.hexdigest());
+def md4(message):
+	return MD4(message.encode()).hexdigest()
 
 if __name__ == "__main__":
+	# Import is intentionally delayed.
+	import sys
 	try:
-		main()
+		# Compute based on stdin
+		print(md4(sys.stdin.read()))
 	except KeyboardInterrupt:
 		pass

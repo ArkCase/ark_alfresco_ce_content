@@ -1,21 +1,16 @@
 #!/bin/bash
 
 set -euo pipefail
+. /.functions
 
-say()
-{
-	echo -e "$(date -Isec): ${@}"
-}
-
-[ -v BASE_DIR ] || BASE_DIR="/app"
-[ -v INIT_DIR ] || INIT_DIR="${BASE_DIR}/init"
+set_or_default BASE_DIR "/app"
+set_or_default INIT_DIR "${BASE_DIR}/init"
 
 ###################################################################
 # UPDATE CA CERTIFICATES                                          #
 ###################################################################
-[ -v SSL_DIR ] || SSL_DIR="/.ssl"
 export ACME_SUPPORT_JCEKS="true"
-/usr/local/bin/acme-init
+init_ssl
 
 #
 # Add the requisite CATALINA_OPTS carrying certificate passwords (not the cleanest way, but
@@ -52,7 +47,7 @@ else
 	say "⚠️ The md4 tool was not found, will not try to set the administrator password"
 fi
 
-# Finally, do environment substitution on the alfresco-global.properties file
+# Finally, do environment substitution on any template files
 while read SRC ; do
 
 	[ -r "${SRC}" ] || continue
@@ -71,15 +66,10 @@ while read SRC ; do
 
 done < <(find /usr/local/tomcat/shared/classes -type f -iname '*.tpl' | sort)
 
-[ -v ALFRESCO_PASSWORD_RESET ] || ALFRESCO_PASSWORD_RESET=""
-case "${ALFRESCO_PASSWORD_RESET,,}" in
-	true ) ALFRESCO_PASSWORD_RESET="true" ;;
-	* ) ALFRESCO_PASSWORD_RESET="false" ;;
-esac
-
-if "${ALFRESCO_PASSWORD_RESET}" ; then
+set_or_default ALFRESCO_PASSWORD_RESET "false"
+if as_boolean "${ALFRESCO_PASSWORD_RESET}" ; then
 	say "📝 Resetting the Alfresco password for the user ${ALFRESCO_ADMIN_USERNAME} (and admin, just in case)"
 	java -jar "${CATALINA_HOME}/alfresco-password-reset.jar" "\${${ALFRESCO_ADMIN_PASSWORD_VAR}}" "admin" "${ALFRESCO_ADMIN_USERNAME}"
 fi
 
-exec "${CATALINA_HOME}/bin/catalina.sh" run -security
+execute "${CATALINA_HOME}/bin/catalina.sh" run -security
