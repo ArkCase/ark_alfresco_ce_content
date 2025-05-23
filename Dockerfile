@@ -14,6 +14,7 @@ ARG PUBLIC_REGISTRY="public.ecr.aws"
 ARG ARCH="amd64"
 ARG OS="linux"
 ARG VER="7.3.1"
+ARG JAVA="11"
 ARG PKG="alfresco-content"
 ARG APP_USER="alfresco"
 ARG APP_UID="33000"
@@ -45,7 +46,7 @@ ARG RM_VER="${VER}"
 ARG RM_IMG="${PUBLIC_REGISTRY}/${RM_REPO}:${RM_VER}"
 
 ARG BASE_REGISTRY="${PUBLIC_REGISTRY}"
-ARG BASE_REPO="arkcase/base"
+ARG BASE_REPO="arkcase/base-java"
 ARG BASE_VER="8"
 ARG BASE_VER_PFX=""
 ARG BASE_IMG="${BASE_REGISTRY}/${BASE_REPO}:${BASE_VER_PFX}${BASE_VER}"
@@ -74,6 +75,7 @@ FROM "${BASE_IMG}"
 ARG ARCH
 ARG OS
 ARG VER
+ARG JAVA
 ARG PKG
 ARG APP_USER
 ARG APP_UID
@@ -90,14 +92,14 @@ LABEL ORG="ArkCase LLC" \
       APP="Alfresco Content Server" \
       VERSION="${VER}"
 
-ENV JAVA_HOME="/usr/lib/jvm/jre-11-openjdk" \
-    JAVA_MAJOR="11" \
+ENV JAVA_MAJOR="${JAVA}" \
     CATALINA_HOME="/usr/local/tomcat" \
     TOMCAT_NATIVE_LIBDIR="${CATALINA_HOME}/native-jni-lib" \
     LD_LIBRARY_PATH="${LD_LIBRARY_PATH:+${LD_LIBRARY_PATH}:}${TOMCAT_NATIVE_LIBDIR}" \
     PATH="${CATALINA_HOME}/bin:${PATH}"
 
-RUN yum -y install \
+RUN set-java "${JAVA}" && \
+    yum -y install \
         epel-release \
     && \
     yum -y install \
@@ -107,7 +109,6 @@ RUN yum -y install \
         fontconfig \
         fontpackages-filesystem \
         freetype \
-        java-${JAVA_MAJOR}-openjdk-devel \
         langpacks-en \
         libpng \
         python3 \
@@ -134,8 +135,7 @@ COPY --chown=root:root md4 bcrypt10 sha256 /usr/local/bin
 RUN chmod 0755 /usr/local/bin/md4 /usr/local/bin/bcrypt10 /usr/local/bin/sha256
 
 USER "${APP_USER}"
-ENV JAVA_HOME="/usr/lib/jvm/jre-11-openjdk" \
-    JAVA_MAJOR="11" \
+ENV JAVA_MAJOR="${JAVA}" \
     CATALINA_HOME="/usr/local/tomcat" \
     TOMCAT_NATIVE_LIBDIR="${CATALINA_HOME}/native-jni-lib" \
     TOMCAT_DIR="${CATALINA_HOME}" \
