@@ -22,15 +22,15 @@ ARG APP_GROUP="${APP_USER}"
 ARG APP_GID="1000"
 
 ARG MARIADB_DRIVER="3.1.2"
-ARG MARIADB_DRIVER_URL="https://repo1.maven.org/maven2/org/mariadb/jdbc/mariadb-java-client/${MARIADB_DRIVER}/mariadb-java-client-${MARIADB_DRIVER}.jar"
+ARG MARIADB_DRIVER_SRC="org.mariadb.jdbc:mariadb-java-client:${MARIADB_DRIVER}"
 ARG MSSQL_DRIVER="9.2.1.jre11"
-ARG MSSQL_DRIVER_URL="https://repo1.maven.org/maven2/com/microsoft/sqlserver/mssql-jdbc/${MSSQL_DRIVER}/mssql-jdbc-${MSSQL_DRIVER}.jar"
+ARG MSSQL_DRIVER_SRC="com.microsoft.sqlserver:mssql-jdbc:${MSSQL_DRIVER}"
 ARG MYSQL_DRIVER="8.0.27"
-ARG MYSQL_DRIVER_URL="https://repo1.maven.org/maven2/mysql/mysql-connector-java/${MYSQL_DRIVER}/mysql-connector-java-${MYSQL_DRIVER}.jar"
+ARG MYSQL_DRIVER_SRC="mysql:mysql-connector-java:${MYSQL_DRIVER}"
 ARG ORACLE_DRIVER="19.11.0.0"
-ARG ORACLE_DRIVER_URL="https://repo1.maven.org/maven2/com/oracle/database/jdbc/ojdbc8/${ORACLE_DRIVER}/ojdbc8-${ORACLE_DRIVER}.jar"
+ARG ORACLE_DRIVER_SRC="com.oracle.database.jdbc:ojdbc8:${ORACLE_DRIVER}"
 ARG POSTGRES_DRIVER="42.3.2"
-ARG POSTGRES_DRIVER_URL="https://repo1.maven.org/maven2/org/postgresql/postgresql/${POSTGRES_DRIVER}/postgresql-${POSTGRES_DRIVER}.jar"
+ARG POSTGRES_DRIVER_SRC="org.postgresql:postgresql:${POSTGRES_DRIVER}"
 ARG ALFRESCO_PASSWORD_RESET="1.0.1"
 ARG ALFRESCO_PASSWORD_RESET_SRC="com.armedia:alfresco-password-reset:${ALFRESCO_PASSWORD_RESET}:jar"
 
@@ -41,31 +41,20 @@ ARG MVN_GET_IMG="${PUBLIC_REGISTRY}/arkcase/artifacts:1.5.0"
 
 ARG ARKCASE_MVN_REPO="https://nexus.armedia.com/repository/arkcase/"
 
-ARG RM_REPO="arkcase/alfresco-ce-rm"
-ARG RM_VER="${VER}"
-ARG RM_IMG="${PUBLIC_REGISTRY}/${RM_REPO}:${RM_VER}"
-
 ARG BASE_REGISTRY="${PUBLIC_REGISTRY}"
 ARG BASE_REPO="arkcase/base-java"
 ARG BASE_VER="8"
 ARG BASE_VER_PFX=""
 ARG BASE_IMG="${BASE_REGISTRY}/${BASE_REPO}:${BASE_VER_PFX}${BASE_VER}"
 
+ARG RM_REPO="arkcase/alfresco-ce-rm"
+ARG RM_VER="${VER}"
+ARG RM_IMG="${PUBLIC_REGISTRY}/${RM_REPO}:${RM_VER}"
+
 # Used to copy artifacts
 FROM "${ALFRESCO_IMG}" AS alfresco-src
 
 ARG RM_IMG
-
-ARG MVN_GET_IMG
-
-# Used to copy artifacts
-FROM "${MVN_GET_IMG}" as alfresco-password-reset-src
-
-ARG ALFRESCO_PASSWORD_RESET_SRC
-ARG ARKCASE_MVN_REPO
-ENV ALFRESCO_PASSWORD_RESET_TGT="/alfresco-password-reset.jar"
-RUN mvn-get "${ALFRESCO_PASSWORD_RESET_SRC}" "${ARKCASE_MVN_REPO}" "${ALFRESCO_PASSWORD_RESET_TGT}"
-
 FROM "${RM_IMG}" AS rm-src
 
 # Final Image
@@ -81,22 +70,24 @@ ARG APP_USER
 ARG APP_UID
 ARG APP_GROUP
 ARG APP_GID
-ARG MARIADB_DRIVER_URL
-ARG MSSQL_DRIVER_URL
-ARG MYSQL_DRIVER_URL
-ARG ORACLE_DRIVER_URL
-ARG POSTGRES_DRIVER_URL
+ARG MARIADB_DRIVER_SRC
+ARG MSSQL_DRIVER_SRC
+ARG MYSQL_DRIVER_SRC
+ARG ORACLE_DRIVER_SRC
+ARG POSTGRES_DRIVER_SRC
+ARG ALFRESCO_PASSWORD_RESET_SRC
+ARG ARKCASE_MVN_REPO
 
 LABEL ORG="ArkCase LLC" \
       MAINTAINER="Armedia Devops Team <devops@armedia.com>" \
       APP="Alfresco Content Server" \
       VERSION="${VER}"
 
-ENV JAVA_MAJOR="${JAVA}" \
-    CATALINA_HOME="/usr/local/tomcat" \
-    TOMCAT_NATIVE_LIBDIR="${CATALINA_HOME}/native-jni-lib" \
-    LD_LIBRARY_PATH="${LD_LIBRARY_PATH:+${LD_LIBRARY_PATH}:}${TOMCAT_NATIVE_LIBDIR}" \
-    PATH="${CATALINA_HOME}/bin:${PATH}"
+ENV JAVA_MAJOR="${JAVA}"
+ENV CATALINA_HOME="/usr/local/tomcat"
+ENV TOMCAT_NATIVE_LIBDIR="${CATALINA_HOME}/native-jni-lib"
+ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH:+${LD_LIBRARY_PATH}:}${TOMCAT_NATIVE_LIBDIR}"
+ENV PATH="${CATALINA_HOME}/bin:${PATH}"
 
 RUN set-java "${JAVA}" && \
     yum -y install \
@@ -122,9 +113,10 @@ RUN set-java "${JAVA}" && \
     useradd -u "${APP_UID}" -g "${APP_GROUP}" -G "${ACM_GROUP}" "${APP_USER}"
 
 WORKDIR "${CATALINA_HOME}"
+ARG RM_AMP="/alfresco-governance-services-community-repo.amp"
 COPY --from=alfresco-src "${CATALINA_HOME}" "${CATALINA_HOME}"
 COPY --from=alfresco-src /licenses /licenses
-COPY --from=rm-src /alfresco-governance-services-community-repo-*.amp /alfresco-governance-services-community-repo.amp
+COPY --from=rm-src /alfresco-governance-services-community-repo-*.amp "${RM_AMP}"
 COPY entrypoint /
 
 RUN chown -R "${APP_USER}:" "${CATALINA_HOME}" && \
@@ -143,21 +135,23 @@ ENV JAVA_MAJOR="${JAVA}" \
     PATH="${CATALINA_HOME}/bin:${PATH}" \
     LIB_DIR="${CATALINA_HOME}/webapps/alfresco/WEB-INF/lib"
 
-ADD --chown="${APP_USER}:${APP_GROUP}" "${MARIADB_DRIVER_URL}" "${LIB_DIR}/"
-ADD --chown="${APP_USER}:${APP_GROUP}" "${MSSQL_DRIVER_URL}" "${LIB_DIR}/"
-ADD --chown="${APP_USER}:${APP_GROUP}" "${MYSQL_DRIVER_URL}" "${LIB_DIR}/"
-ADD --chown="${APP_USER}:${APP_GROUP}" "${ORACLE_DRIVER_URL}" "${LIB_DIR}/"
-ADD --chown="${APP_USER}:${APP_GROUP}" "${POSTGRES_DRIVER_URL}" "${LIB_DIR}/"
-ADD --chown="${APP_USER}:${APP_GROUP}" "server.xml" "${TOMCAT_DIR}/conf/server.xml"
+RUN mvn-get "${MARIADB_DRIVER_SRC}" "${LIB_DIR}" && \
+    mvn-get "${MSSQL_DRIVER_SRC}" "${LIB_DIR}" && \
+    mvn-get "${MYSQL_DRIVER_SRC}" "${LIB_DIR}" && \
+    mvn-get "${ORACLE_DRIVER_SRC}" "${LIB_DIR}" && \
+    mvn-get "${POSTGRES_DRIVER_SRC}" "${LIB_DIR}"
+COPY --chown="${APP_USER}:${APP_GROUP}" "server.xml" "${TOMCAT_DIR}/conf/server.xml"
 
+ENV RM_AMP="${RM_AMP}"
 RUN java -jar "${TOMCAT_DIR}/alfresco-mmt"/alfresco-mmt*.jar \
-        install "/alfresco-governance-services-community-repo.amp" \
+        install "${RM_AMP}" \
         "${TOMCAT_DIR}/webapps/alfresco" -nobackup && \
     NATIVE="$(catalina.sh configtest 2>&1 | grep -c 'Loaded Apache Tomcat Native library')" && \
     test ${NATIVE} -ge 1 || exit 1 && \
     java -jar "${TOMCAT_DIR}/alfresco-mmt"/alfresco-mmt*.jar list  "${TOMCAT_DIR}/webapps/alfresco"
 
-COPY --from=alfresco-password-reset-src --chown="${APP_USER}:${APP_GROUP}" /alfresco-password-reset.jar "${TOMCAT_DIR}"
+ARG ALFRESCO_PASSWORD_RESET_TGT="${TOMCAT_DIR}/alfresco-password-reset.jar"
+RUN mvn-get "${ALFRESCO_PASSWORD_RESET_SRC}" "${ARKCASE_MVN_REPO}" "${ALFRESCO_PASSWORD_RESET_TGT}"
 
 EXPOSE 8000 8080 10001
 VOLUME [ "/usr/local/tomcat/alf_data" ]
