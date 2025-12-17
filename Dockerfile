@@ -88,6 +88,7 @@ ENV CATALINA_HOME="/usr/local/tomcat"
 ENV TOMCAT_NATIVE_LIBDIR="${CATALINA_HOME}/native-jni-lib"
 ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH:+${LD_LIBRARY_PATH}:}${TOMCAT_NATIVE_LIBDIR}"
 ENV PATH="${CATALINA_HOME}/bin:${PATH}"
+ENV HOME_DIR="/home/alfresco"
 
 RUN set-java "${JAVA}" && \
     yum -y install \
@@ -110,21 +111,19 @@ RUN set-java "${JAVA}" && \
     mkdir -p "${CATALINA_HOME}" && \
     mkdir -p "${TOMCAT_NATIVE_LIBDIR}" && \
     groupadd -g "${APP_GID}" "${APP_GROUP}" && \
-    useradd -u "${APP_UID}" -g "${APP_GROUP}" -G "${ACM_GROUP}" "${APP_USER}"
+    useradd -u "${APP_UID}" -g "${APP_GROUP}" -G "${ACM_GROUP}" -d "${HOME_DIR}" "${APP_USER}"
 
 WORKDIR "${CATALINA_HOME}"
 ARG RM_AMP="/alfresco-governance-services-community-repo.amp"
 COPY --from=alfresco-src "${CATALINA_HOME}" "${CATALINA_HOME}"
 COPY --from=alfresco-src /licenses /licenses
 COPY --from=rm-src /alfresco-governance-services-community-repo-*.amp "${RM_AMP}"
-COPY entrypoint /
+COPY --chown=root:root --chmod=0755 entrypoint /
 
 RUN chown -R "${APP_USER}:" "${CATALINA_HOME}" && \
-    chown -R "${APP_USER}:" /licenses  && \
-    chmod 0755 /entrypoint
+    chown -R "${APP_USER}:" /licenses
 
-COPY --chown=root:root md4 bcrypt10 sha256 /usr/local/bin
-RUN chmod 0755 /usr/local/bin/md4 /usr/local/bin/bcrypt10 /usr/local/bin/sha256
+COPY --chown=root:root --chmod=0755 md4 bcrypt10 sha256 /usr/local/bin
 
 USER "${APP_USER}"
 ENV JAVA_MAJOR="${JAVA}" \
@@ -152,6 +151,8 @@ RUN java -jar "${TOMCAT_DIR}/alfresco-mmt"/alfresco-mmt*.jar \
 
 ARG ALFRESCO_PASSWORD_RESET_TGT="${TOMCAT_DIR}/alfresco-password-reset.jar"
 RUN mvn-get "${ALFRESCO_PASSWORD_RESET_SRC}" "${ARKCASE_MVN_REPO}" "${ALFRESCO_PASSWORD_RESET_TGT}"
+
+RUN mkdir -p "${HOME_DIR}/.postgresql" && ln -svf "${CA_TRUSTS_PEM}" "${HOME_DIR}/.postgresql/root.crt"
 
 EXPOSE 8000 8080 10001
 VOLUME [ "/usr/local/tomcat/alf_data" ]
