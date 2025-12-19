@@ -34,6 +34,7 @@ ARG POSTGRES_DRIVER_SRC="org.postgresql:postgresql:${POSTGRES_DRIVER}"
 ARG ALFRESCO_PASSWORD_RESET="1.0.1"
 ARG ALFRESCO_PASSWORD_RESET_SRC="com.armedia:alfresco-password-reset:${ALFRESCO_PASSWORD_RESET}:jar"
 
+ARG ALFRESCO_EDITION="community"
 ARG ALFRESCO_REPO="docker.io/alfresco/alfresco-content-repository-community"
 ARG ALFRESCO_IMG="${ALFRESCO_REPO}:${VER}"
 
@@ -84,6 +85,7 @@ ARG MSSQL_DRIVER_SRC
 ARG MYSQL_DRIVER_SRC
 ARG ORACLE_DRIVER_SRC
 ARG POSTGRES_DRIVER_SRC
+ARG ALFRESCO_EDITION
 ARG ALFRESCO_PASSWORD_RESET_SRC
 ARG ARKCASE_MVN_REPO
 
@@ -117,11 +119,11 @@ RUN set-java "${JAVA}" && \
     useradd -u "${APP_UID}" -g "${APP_GROUP}" -G "${ACM_GROUP}" -d "${HOME_DIR}" -m "${APP_USER}"
 
 WORKDIR "${CATALINA_HOME}"
-ARG RM_AMP="/alfresco-governance-services-community-repo.amp"
+ARG RM_AMP="/alfresco-governance-services-${ALFRESCO_EDITION}-repo.amp"
 COPY --from=alfresco-src --chown="${APP_USER}:${APP_GROUP}" "${CATALINA_HOME}" "${CATALINA_HOME}"
 COPY --from=alfresco-src --chown="${APP_USER}:${APP_GROUP}" /licenses /licenses
 COPY --from=tomcat-src --chown="${APP_USER}:${APP_GROUP}" --chmod="0755" "/app/tomcat/lib/native/${JAVA_MAJOR}" "${TOMCAT_NATIVE_LIBDIR}.new"
-COPY --from=rm-src /alfresco-governance-services-community-repo-*.amp "${RM_AMP}"
+COPY --from=rm-src /alfresco-governance-services-${ALFRESCO_EDITION}-repo-*.amp "${RM_AMP}"
 
 COPY --chown=root:root --chmod=0755 entrypoint /
 COPY --chown=root:root --chmod=0755 md4 bcrypt10 sha256 /usr/local/bin
