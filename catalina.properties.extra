@@ -1,0 +1,3 @@
+
+# This is CRITICAL to support ${ENVVAR} expansion in configuration files
+org.apache.tomcat.util.digester.PROPERTY_SOURCE=org.apache.tomcat.util.digester.EnvironmentPropertySource

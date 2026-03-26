@@ -33,7 +33,7 @@ ARG ORACLE_DRIVER_SRC="com.oracle.database.jdbc:ojdbc8:${ORACLE_DRIVER}"
 ARG POSTGRES_DRIVER="42.3.2"
 ARG POSTGRES_DRIVER_SRC="org.postgresql:postgresql:${POSTGRES_DRIVER}"
 ARG ALFRESCO_PASSWORD_RESET="1.0.1"
-ARG ALFRESCO_PASSWORD_RESET_SRC="com.armedia:alfresco-password-reset:${ALFRESCO_PASSWORD_RESET}:jar"
+ARG ALFRESCO_PW_RESET_SRC="com.armedia:alfresco-password-reset:${ALFRESCO_PASSWORD_RESET}:jar"
 
 ARG ALFRESCO_EDITION="community"
 ARG ALFRESCO_REPO="docker.io/alfresco/alfresco-content-repository-community"
@@ -67,6 +67,10 @@ ARG BASE_TOMCAT_IMG
 
 FROM "${BASE_TOMCAT_IMG}" AS tomcat-src
 
+FROM scratch AS tempfiles
+
+ADD catalina.properties.extra /
+
 # Final Image
 ARG BASE_IMG
 
@@ -87,7 +91,7 @@ ARG MYSQL_DRIVER_SRC
 ARG ORACLE_DRIVER_SRC
 ARG POSTGRES_DRIVER_SRC
 ARG ALFRESCO_EDITION
-ARG ALFRESCO_PASSWORD_RESET_SRC
+ARG ALFRESCO_PW_RESET_SRC
 ARG ARKCASE_MVN_REPO
 
 LABEL ORG="ArkCase LLC" \
@@ -154,10 +158,13 @@ RUN java -jar "${TOMCAT_DIR}/alfresco-mmt"/alfresco-mmt*.jar \
     java -jar "${TOMCAT_DIR}/alfresco-mmt"/alfresco-mmt*.jar list  "${TOMCAT_DIR}/webapps/alfresco" && \
     ( catalina.sh configtest 2>&1 | grep -q 'Loaded Apache Tomcat Native library' )
 
-ARG ALFRESCO_PASSWORD_RESET_TGT="${TOMCAT_DIR}/alfresco-password-reset.jar"
-RUN mvn-get "${ALFRESCO_PASSWORD_RESET_SRC}" "${ARKCASE_MVN_REPO}" "${ALFRESCO_PASSWORD_RESET_TGT}"
+RUN ALFRESCO_PW_RESET_TGT="${TOMCAT_DIR}/alfresco-password-reset.jar" && \
+    mvn-get "${ALFRESCO_PW_RESET_SRC}" "${ARKCASE_MVN_REPO}" "${ALFRESCO_PW_RESET_TGT}"
 
 RUN mkdir -p "${HOME_DIR}/.postgresql" && ln -svf "${CA_TRUSTS_PEM}" "${HOME_DIR}/.postgresql/root.crt"
+
+RUN --mount=type=cache,from=tempfiles,target=/tempfiles,id=tempfiles,ro=true \
+    cat /tempfiles/catalina.properties.extra >> /usr/local/tomcat/conf/catalina.properties
 
 EXPOSE 8000 8080 10001
 VOLUME [ "/usr/local/tomcat/alf_data" ]
