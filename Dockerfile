@@ -153,8 +153,8 @@ RUN java -jar "${TOMCAT_DIR}/alfresco-mmt"/alfresco-mmt*.jar \
     java -jar "${TOMCAT_DIR}/alfresco-mmt"/alfresco-mmt*.jar list  "${TOMCAT_DIR}/webapps/alfresco" && \
     ( catalina.sh configtest 2>&1 | grep -q 'Loaded Apache Tomcat Native library' )
 
-ARG ALFRESCO_PASSWORD_RESET_TGT="${TOMCAT_DIR}/alfresco-password-reset.jar"
-RUN mvn-get "${ALFRESCO_PASSWORD_RESET_SRC}" "${ARKCASE_MVN_REPO}" "${ALFRESCO_PASSWORD_RESET_TGT}"
+RUN ALFRESCO_PASSWORD_RESET_TGT="${TOMCAT_DIR}/alfresco-password-reset.jar" && \
+    mvn-get "${ALFRESCO_PASSWORD_RESET_SRC}" "${ARKCASE_MVN_REPO}" "${ALFRESCO_PASSWORD_RESET_TGT}"
 
 RUN mkdir -p "${HOME_DIR}/.postgresql" && ln -svf "${CA_TRUSTS_PEM}" "${HOME_DIR}/.postgresql/root.crt"
 
