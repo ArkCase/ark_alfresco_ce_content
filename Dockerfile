@@ -155,8 +155,8 @@ ENV RM_AMP="${RM_AMP}"
 RUN java -jar "${TOMCAT_DIR}/alfresco-mmt"/alfresco-mmt*.jar \
         install "${RM_AMP}" \
         "${TOMCAT_DIR}/webapps/alfresco" -nobackup && \
-    java -jar "${TOMCAT_DIR}/alfresco-mmt"/alfresco-mmt*.jar list  "${TOMCAT_DIR}/webapps/alfresco" && \
-    ( catalina.sh configtest 2>&1 | grep -q 'Loaded Apache Tomcat Native library' )
+    java -jar "${TOMCAT_DIR}/alfresco-mmt"/alfresco-mmt*.jar list  "${TOMCAT_DIR}/webapps/alfresco"
+RUN catalina.sh configtest 2>&1 | grep -q 'Loaded Apache Tomcat Native library'
 
 RUN ALFRESCO_PW_RESET_TGT="${TOMCAT_DIR}/alfresco-password-reset.jar" && \
     mvn-get "${ALFRESCO_PW_RESET_SRC}" "${ARKCASE_MVN_REPO}" "${ALFRESCO_PW_RESET_TGT}"

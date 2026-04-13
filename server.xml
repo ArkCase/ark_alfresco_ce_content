@@ -121,10 +121,10 @@
                maxThreads="150"
                useBodyEncodingForURI="true">
         <UpgradeProtocol className="org.apache.coyote.http2.Http2Protocol" />
-        <SSLHostConfig protocols="TLSv1.2" certificateVerification="none">
+        <SSLHostConfig protocols="TLSv1.3" certificateVerification="none">
             <Certificate certificateKeyAlias="${JAVA_KEY_ALIAS}"
                          certificateKeystoreFile="${JAVA_KEYSTORE}"
-                         certificateKeystorePasswordFile="${JAVA_KEYSTORE_PASSWORD_FILE}"
+                         certificateKeystorePassword="${JAVA_KEYSTORE_PASSWORD}"
                          certificateKeystoreType="${JAVA_KEYSTORE_TYPE}" />
         </SSLHostConfig>
     </Connector>
@@ -135,15 +135,13 @@
                secure="true"
                SSLEnabled="true"
                connectionTimeout="20000">
-        <SSLHostConfig protocols="TLSv1.2"
-                       certificateVerification="required"
-                       truststoreFile="${JAVA_TRUSTSTORE}"
-                       truststorePassword="${JAVA_TRUSTSTORE_PASSWORD}"
-                       truststoreType="${JAVA_TRUSTSTORE_TYPE}">
+        <SSLHostConfig protocols="TLSv1.3" certificateVerification="required" caCertificateFile="/.ssl/ca-root.pem">
             <Certificate certificateKeyAlias="${JAVA_KEY_ALIAS}"
+                         certificateKeyPassword="${JAVA_KEY_PASSWORD}"
                          certificateKeystoreFile="${JAVA_KEYSTORE}"
-                         certificateKeystorePasswordFile="${JAVA_KEYSTORE_PASSWORD_FILE}"
-                         certificateKeystoreType="${JAVA_KEYSTORE_TYPE}" />
+                         certificateKeystorePassword="${JAVA_KEYSTORE_PASSWORD}"
+                         certificateKeystoreType="${JAVA_KEYSTORE_TYPE}"
+                         certificateKeystoreProvider="${JAVA_KEYSTORE_PROVIDER}" />
         </SSLHostConfig>
     </Connector>
 
