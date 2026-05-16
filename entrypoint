@@ -3,29 +3,33 @@
 set -euo pipefail
 . /.functions
 
-set_or_default BASE_DIR "/app"
-set_or_default INIT_DIR "${BASE_DIR}/init"
-
-###################################################################
-# UPDATE CA CERTIFICATES                                          #
-###################################################################
+#
+# Init all the SSL-related stuff
+#
 init_ssl
 
 #
 # Add the requisite CATALINA_OPTS carrying certificate passwords (not the cleanest way, but
 # Alfresco isn't smart enough to do better)
 #
-[ -v CATALINA_OPTS ] || CATALINA_OPTS=""
-CATALINA_OPTS+=" -Dencryption.ssl.truststore.location=/etc/pki/java/cacerts -Dencryption.ssl.truststore.type=JKS"
-if [ -f "${SSL_DIR}/keystore.pass" ] && [ -f "${SSL_DIR}/keystore.pkcs12" ] ; then
-	KEYSTORE_PASSWORD="$(<"${SSL_DIR}/keystore.pass")"
-	CATALINA_OPTS+=" -Dencryption.ssl.keystore.location=${SSL_DIR}/keystore.pkcs12 -Dencryption.ssl.keystore.type=PKCS12"
-	CATALINA_OPTS+=" -Dssl-keystore.password=${KEYSTORE_PASSWORD} -Dssl-keystore.aliases=acme -Dssl-keystore.acme.password=${KEYSTORE_PASSWORD}"
-fi
+set_or_default CATALINA_OPTS
+SSL_OPTS=(
+	-Dencryption.ssl.keystore.location="${JAVA_KEYSTORE}"
+	-Dencryption.ssl.keystore.type="${JAVA_KEYSTORE_TYPE}"
+
+	-Dssl-keystore.password="${JAVA_KEYSTORE_PASSWORD}"
+	-Dssl-keystore.aliases="${JAVA_KEY_ALIAS}"
+	"-Dssl-keystore.${JAVA_KEY_ALIAS}.password=${JAVA_KEY_PASSWORD}"
+
+	-Dencryption.ssl.truststore.location="${JAVA_TRUSTSTORE}"
+	-Dencryption.ssl.truststore.type="${JAVA_TRUSTSTORE_TYPE}"
+)
+CATALINA_OPTS+=" ${SSL_OPTS[@]}"
 export CATALINA_OPTS
+unset SSL_OPTS
 
 #
-# Finally, if our admin password is set in a envvar, and the MD4 tool
+# Finally, if our admin password is set in an envvar, and the MD4 tool
 # is available in the path, create an MD4 version of the admin password
 # and make it available downstream
 #
@@ -37,13 +41,13 @@ if type -P md4 &>/dev/null ; then
 			V="$(echo -n "${!ALFRESCO_ADMIN_PASSWORD_VAR}" | md4)"
 			eval export "${ALFRESCO_ADMIN_PASSWORD_VAR}_MD4=${V@Q}"
 		else
-			say "⚠️ The administrator password variable [${ALFRESCO_ADMIN_PASSWORD_VAR}] is not set"
+			warn "The administrator password variable [${ALFRESCO_ADMIN_PASSWORD_VAR}] is not set"
 		fi
 	else
-		say "⚠️ The ALFRESCO_ADMIN_PASSWORD_VAR value [${ALFRESCO_ADMIN_PASSWORD_VAR}] is not a valid environment variable name"
+		warn "The ALFRESCO_ADMIN_PASSWORD_VAR value [${ALFRESCO_ADMIN_PASSWORD_VAR}] is not a valid environment variable name"
 	fi
 else
-	say "⚠️ The md4 tool was not found, will not try to set the administrator password"
+	warn "The md4 tool was not found, will not try to set the administrator password"
 fi
 
 # Finally, do environment substitution on any template files
@@ -56,8 +60,8 @@ while read SRC ; do
 	[ -n "${TGT}" ] || continue
 
 	# Can we write to the target file? We can write to the target
-    # file if it doesn't exist, or exists and is writable.
-	[ -f "${TGT}" ] && [ ! -w "${TGT}" ] && say "⚠️ Can't expand the environment variables for [${TGT}] - the file exists but is not writable" && continue
+	# file if it doesn't exist, or exists and is writable.
+	[ -f "${TGT}" ] && [ ! -w "${TGT}" ] && warn "Can't expand the environment variables for [${TGT}] - the file exists but is not writable" && continue
 
 	# Do the deed!
 	say "📝 Expanding environment variables for [${TGT}]"
@@ -65,7 +69,7 @@ while read SRC ; do
 
 done < <(find /usr/local/tomcat/shared/classes -type f -iname '*.tpl' | sort)
 
-set_or_default ALFRESCO_PASSWORD_RESET "false"
+set_as_boolean ALFRESCO_PASSWORD_RESET "false"
 if as_boolean "${ALFRESCO_PASSWORD_RESET}" ; then
 	say "📝 Resetting the Alfresco password for the user ${ALFRESCO_ADMIN_USERNAME} (and admin, just in case)"
 	java -jar "${CATALINA_HOME}/alfresco-password-reset.jar" "\${${ALFRESCO_ADMIN_PASSWORD_VAR}}" "admin" "${ALFRESCO_ADMIN_USERNAME}"

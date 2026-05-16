@@ -10,6 +10,7 @@
 #
 ###########################################################################################################
 
+ARG FIPS=""
 ARG PUBLIC_REGISTRY="public.ecr.aws"
 ARG ARCH="amd64"
 ARG OS="linux"
@@ -44,7 +45,7 @@ ARG BASE_REGISTRY="${PUBLIC_REGISTRY}"
 ARG BASE_REPO="arkcase/base-java"
 ARG BASE_VER="24.04"
 ARG BASE_VER_PFX=""
-ARG BASE_IMG="${BASE_REGISTRY}/${BASE_REPO}:${BASE_VER_PFX}${BASE_VER}"
+ARG BASE_IMG="${BASE_REGISTRY}/${BASE_REPO}${FIPS}:${BASE_VER_PFX}${BASE_VER}"
 
 ARG BASE_TOMCAT_REGISTRY="${BASE_REGISTRY}"
 ARG BASE_TOMCAT_REPO="arkcase/base-tomcat"
@@ -65,6 +66,10 @@ FROM "${RM_IMG}" AS rm-src
 ARG BASE_TOMCAT_IMG
 
 FROM "${BASE_TOMCAT_IMG}" AS tomcat-src
+
+FROM scratch AS tempfiles
+
+ADD catalina.properties.extra /
 
 # Final Image
 ARG BASE_IMG
@@ -150,13 +155,16 @@ ENV RM_AMP="${RM_AMP}"
 RUN java -jar "${TOMCAT_DIR}/alfresco-mmt"/alfresco-mmt*.jar \
         install "${RM_AMP}" \
         "${TOMCAT_DIR}/webapps/alfresco" -nobackup && \
-    java -jar "${TOMCAT_DIR}/alfresco-mmt"/alfresco-mmt*.jar list  "${TOMCAT_DIR}/webapps/alfresco" && \
-    ( catalina.sh configtest 2>&1 | grep -q 'Loaded Apache Tomcat Native library' )
+    java -jar "${TOMCAT_DIR}/alfresco-mmt"/alfresco-mmt*.jar list  "${TOMCAT_DIR}/webapps/alfresco"
+RUN catalina.sh configtest 2>&1 | grep -q 'Loaded Apache Tomcat Native library'
 
 RUN ALFRESCO_PW_RESET_TGT="${TOMCAT_DIR}/alfresco-password-reset.jar" && \
     mvn-get "${ALFRESCO_PW_RESET_SRC}" "${ARKCASE_MVN_REPO}" "${ALFRESCO_PW_RESET_TGT}"
 
 RUN mkdir -p "${HOME_DIR}/.postgresql" && ln -svf "${CA_TRUSTS_PEM}" "${HOME_DIR}/.postgresql/root.crt"
+
+RUN --mount=type=cache,from=tempfiles,target=/tempfiles,id=tempfiles,ro=true \
+    cat /tempfiles/catalina.properties.extra >> /usr/local/tomcat/conf/catalina.properties
 
 EXPOSE 8000 8080 10001
 VOLUME [ "/usr/local/tomcat/alf_data" ]
