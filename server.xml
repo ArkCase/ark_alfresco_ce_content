@@ -122,10 +122,10 @@
                useBodyEncodingForURI="true">
         <UpgradeProtocol className="org.apache.coyote.http2.Http2Protocol" />
         <SSLHostConfig protocols="TLSv1.3" certificateVerification="none">
-            <Certificate certificateKeyFile="${SSL_PRIVATE_KEY_AES}"
+            <Certificate certificateKeyFile="${SSL_PRIVATE_KEY_ENCRYPTED}"
                          certificateKeyPassword="${SSL_PASSWORD}"
                          certificateFile="${SSL_CERTIFICATE_TOMCAT}"
-                         certificateChainFile="${SSL_INT}"
+                         certificateChainFile="${SSL_CA_INT}"
                          type="RSA" />
         </SSLHostConfig>
     </Connector>
@@ -136,11 +136,11 @@
                secure="true"
                SSLEnabled="true"
                connectionTimeout="20000">
-        <SSLHostConfig protocols="TLSv1.3" certificateVerification="required" caCertificateFile="${SSL_ROOT}">
-            <Certificate certificateKeyFile="${SSL_PRIVATE_KEY_AES}"
+        <SSLHostConfig protocols="TLSv1.3" certificateVerification="required" caCertificateFile="${SSL_CA_ROOT}">
+            <Certificate certificateKeyFile="${SSL_PRIVATE_KEY_ENCRYPTED}"
                          certificateKeyPassword="${SSL_PASSWORD}"
                          certificateFile="${SSL_CERTIFICATE_TOMCAT}"
-                         certificateChainFile="${SSL_INT}"
+                         certificateChainFile="${SSL_CA_INT}"
                          type="RSA" />
         </SSLHostConfig>
     </Connector>
