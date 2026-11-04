@@ -133,7 +133,7 @@ COPY --from=tomcat-src --chown="${APP_USER}:${APP_GROUP}" --chmod="0755" "/app/t
 
 COPY --from=rm-src /alfresco-governance-services-${ALFRESCO_EDITION}-repo-*.amp "${RM_AMP}"
 
-COPY --chown=root:root --chmod=0755 entrypoint /
+COPY --chown=root:root --chmod=0755 entrypoint /usr/local/bin
 COPY --chown=root:root --chmod=0755 md4 bcrypt10 sha256 /usr/local/bin
 
 RUN rm -rf "${TOMCAT_NATIVE_LIBDIR}" && \
@@ -170,4 +170,3 @@ RUN --mount=type=cache,from=tempfiles,target=/tempfiles,id=tempfiles,ro=true \
 
 EXPOSE 8000 8080 10001
 VOLUME [ "/usr/local/tomcat/alf_data" ]
-ENTRYPOINT [ "/entrypoint" ]
