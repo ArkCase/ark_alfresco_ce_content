@@ -10,23 +10,36 @@ init_ssl
 
 #
 # Add the requisite CATALINA_OPTS carrying certificate passwords (not the cleanest way, but
-# Alfresco isn't smart enough to do better)
+# Alfresco isn't smart enough to do better). The passwords go in an argument file, to keep
+# them off the command line
 #
 set_or_default CATALINA_OPTS
+SSL_ARGS=(
+	-Dssl-keystore.password="${JAVA_KEYSTORE_PASSWORD}"
+	"-Dssl-keystore.${JAVA_KEY_ALIAS}.password=${JAVA_KEY_PASSWORD}"
+)
+
+# The metadata keystore's passwords come from the pod, if it provides them
+[ -v METADATA_KEYSTORE_PASSWORD ] && SSL_ARGS+=( -Dmetadata-keystore.password="${METADATA_KEYSTORE_PASSWORD}" )
+[ -v METADATA_KEYSTORE_METADATA_PASSWORD ] && SSL_ARGS+=( -Dmetadata-keystore.metadata.password="${METADATA_KEYSTORE_METADATA_PASSWORD}" )
+
+ALFRESCO_SSL_ARGS="${TEMP_DIR}/.java-args.alfresco"
+render_ssl_java_args "${ALFRESCO_SSL_ARGS}" "${SSL_ARGS[@]}" || fail "Failed to render the Alfresco SSL argument file at [${ALFRESCO_SSL_ARGS}]"
+
 SSL_OPTS=(
 	-Dencryption.ssl.keystore.location="${JAVA_KEYSTORE}"
 	-Dencryption.ssl.keystore.type="${JAVA_KEYSTORE_TYPE}"
 
-	-Dssl-keystore.password="${JAVA_KEYSTORE_PASSWORD}"
 	-Dssl-keystore.aliases="${JAVA_KEY_ALIAS}"
-	"-Dssl-keystore.${JAVA_KEY_ALIAS}.password=${JAVA_KEY_PASSWORD}"
 
 	-Dencryption.ssl.truststore.location="${JAVA_TRUSTSTORE}"
 	-Dencryption.ssl.truststore.type="${JAVA_TRUSTSTORE_TYPE}"
+
+	"@${ALFRESCO_SSL_ARGS}"
 )
 CATALINA_OPTS+=" ${SSL_OPTS[@]}"
 export CATALINA_OPTS
-unset SSL_OPTS
+unset SSL_OPTS SSL_ARGS
 
 #
 # Finally, if our admin password is set in an envvar, and the MD4 tool
