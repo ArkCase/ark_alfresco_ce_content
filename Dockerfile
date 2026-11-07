@@ -121,7 +121,9 @@ RUN set-java "${JAVA}" && \
     mkdir -p "${CATALINA_HOME}" && \
     mkdir -p "${TOMCAT_NATIVE_LIBDIR}" && \
     groupadd -g "${APP_GID}" "${APP_GROUP}" && \
-    useradd -u "${APP_UID}" -g "${APP_GROUP}" -G "${ACM_GROUP}" -d "${HOME_DIR}" -m "${APP_USER}"
+    useradd -u "${APP_UID}" -g "${APP_GROUP}" -G "${ACM_GROUP}" -d "${HOME_DIR}" -m "${APP_USER}" && \
+    chown -R "${APP_USER}:${APP_GROUP}" "${TEMP_DIR}" && \
+    chmod -R u=rwX,g=rX,o= "${TEMP_DIR}"
 
 WORKDIR "${CATALINA_HOME}"
 ARG RM_AMP="/alfresco-governance-services-${ALFRESCO_EDITION}-repo.amp"
